@@ -1,63 +1,57 @@
 #!/usr/bin/python3
-"""This module contains the class BaseModel"""
+"""
+BaseModel - Module
+BaseModel Parent class,
+ """
 
-from uuid import uuid4
+import uuid
 from datetime import datetime
-from . import storage
+import models
 
 
-class BaseModel():
+class BaseModel:
     """
-    Defines the class BaseModel
-
-    Methods:
-        __init__(self, *args, **kwargs): Initializes a new BaseModel instance
-        save(self): Updates the current instance with the current datetime
-        to_dict(self): Returns a dictionary represention of __dict__
-        __str__(self): Returns a string representation of the instance
+    BaseModel class Parent class to take care of the initialization,
+    serialization and deserialization of instances
     """
-
     def __init__(self, *args, **kwargs):
-        """Initializes a new BaseModel instance"""
-
-        if kwargs:
-            for key, value in kwargs.items():
-                if key == "created_at" or key == "updated_at":
-                    format = "%Y-%m-%dT%H:%M:%S.%f"
-                    new_value = datetime.strptime(value, format)
-
-                    setattr(self, key, new_value)
-
-                elif key != "__class__":
-                    setattr(self, key, value)
-
-        else:
-            self.id = str(uuid4())
+        """Initialization of a BaseModel instance"""
+        if (len(kwargs) == 0):
+            self.id = str(uuid.uuid4())
             self.created_at = datetime.now()
             self.updated_at = datetime.now()
-            storage.new(self)
-
-    def save(self):
-        """Updates the current instance with the current datetime"""
-
-        self.updated_at = datetime.now()
-        storage.new(self)
-        storage.save()
-
-    def to_dict(self):
-        """Returns a dictionary represention of __dict__ of the instance"""
-
-        result_dict = {}
-        for key, value in self.__dict__.items():
-            if key == "created_at" or key == "updated_at":
-                result_dict[f"{key}"] = f"{value.isoformat()}"
-            else:
-                result_dict[f"{key}"] = f"{value}"
-
-        result_dict["__class__"] = self.__class__.__name__
-        return result_dict
+            models.storage.new(self)
+        else:
+            kwargs["created_at"] = datetime.strptime(kwargs["created_at"],
+                                                     "%Y-%m-%dT%H:%M:%S.%f")
+            kwargs["updated_at"] = datetime.strptime(kwargs["updated_at"],
+                                                     "%Y-%m-%dT%H:%M:%S.%f")
+            for key, val in kwargs.items():
+                if "__class__" not in key:
+                    setattr(self, key, val)
 
     def __str__(self):
-        """Returns a string representation of the instance"""
+        """String representation of a BaseModel instance"""
+        return ("[{}] ({}) {}".format(self.__class__.__name__,
+                                      self.id, self.__dict__))
 
-        return f"[{self.__class__.__name__}] ({self.id}) {self.__dict__}"
+    def __repr__(self):
+        """
+            Return string representation of BaseModel class
+        """
+        return ("[{}] ({}) {}".format(self.__class__.__name__,
+                                      self.id, self.__dict__))
+
+    def save(self):
+        """updates 'updated_at' instance with current datetime"""
+        self.updated_at = datetime.now()
+        models.storage.save()
+
+    def to_dict(self):
+        """Return dictionary representation of BaseModel class."""
+        nw_dct = dict(self.__dict__)
+        nw_dct['__class__'] = self.__class__.__name__
+        nw_dct['created_at'] = self.updated_at.strftime("%Y-%m-%dT%H:%M:%S.%f")
+        nw_dct['updated_at'] = self.created_at.strftime("%Y-%m-%dT%H:%M:%S.%f")
+
+        return (nw_dct)
