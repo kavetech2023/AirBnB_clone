@@ -1,290 +1,182 @@
-#!/usr/bin/python
-"""
-Module for console
-"""
+#!/usr/bin/python3
+
 import cmd
-import re
-import shlex
-import ast
-from models import storage
+import models
+from shlex import split as split
 from models.base_model import BaseModel
 from models.user import User
+from models.state import State
+from models.city import City
 from models.amenity import Amenity
 from models.place import Place
 from models.review import Review
-from models.state import State
-from models.city import City
+
+new_classes = {'BaseModel': BaseModel, 'User': User, 'State': State,
+               'Amenity': Amenity, 'Place': Place, 'City': City,
+               'Review': Review}
 
 
-def split_curly_braces(e_arg):
-    """
-    Splits the curly braces for the update method
-    """
-    curly_braces = re.search(r"\{(.*?)\}", e_arg)
-
-    if curly_braces:
-        id_with_comma = shlex.split(e_arg[:curly_braces.span()[0]])
-        id = [i.strip(",") for i in id_with_comma][0]
-
-        str_data = curly_braces.group(1)
-        try:
-            arg_dict = ast.literal_eval("{" + str_data + "}")
-        except Exception:
-            print("**  invalid dictionary format **")
-            return
-        return id, arg_dict
-    else:
-        commands = e_arg.split(",")
-        if commands:
-            try:
-                id = commands[0]
-            except Exception:
-                return "", ""
-            try:
-                attr_name = commands[1]
-            except Exception:
-                return id, ""
-            try:
-                attr_value = commands[2]
-            except Exception:
-                return id, attr_name
-            return f"{id}", f"{attr_name} {attr_value}"
-
-
+# Declare the HBNBCommand class
 class HBNBCommand(cmd.Cmd):
     """
-    HBNBCommand console class
+    command interpreter
     """
     prompt = "(hbnb) "
-    valid_classes = ["BaseModel", "User", "Amenity",
-                     "Place", "Review", "State", "City"]
+
+    def do_quit(self, line):
+        """ Quit command to exit the program.
+        """
+        return True
+
+    def do_EOF(self, line):
+        """ Exit the program."""
+        print("")
+        return True
 
     def emptyline(self):
-        """
-        Do nothing when an empty line is entered.
-        """
+        """ Shouldn’t execute anything. """
         pass
 
-    def do_EOF(self, arg):
-        """
-        EOF (Ctrl+D) signal to exit the program.
-        """
-        return True
-
-    def do_quit(self, arg):
-        """
-        Quit command to exit the program.
-        """
-        return True
-
-    def do_create(self, arg):
-        """
-        Create a new instance of BaseModel and save it to the JSON file.
-        Usage: create <class_name>
-        """
-        commands = shlex.split(arg)
-
-        if len(commands) == 0:
+    def do_create(self, line):
+        """Create command to create new User"""
+        splitline = split(line)
+        if not splitline:
             print("** class name missing **")
-        elif commands[0] not in self.valid_classes:
+        elif splitline[0] not in new_classes:
             print("** class doesn't exist **")
         else:
-            new_instance = eval(f"{commands[0]}()")
-            storage.save()
+            new_instance = new_classes[splitline[0]]()
             print(new_instance.id)
+            new_instance.save()
 
-    def do_show(self, arg):
-        """
-        Show the string representation of an instance.
-        Usage: show <class_name> <id>
-        """
-        commands = shlex.split(arg)
-
-        if len(commands) == 0:
+    def do_show(self, line):
+        """Show command to show an instance based on class name and id"""
+        if not line:
             print("** class name missing **")
-        elif commands[0] not in self.valid_classes:
+        elif line.split()[0] not in new_classes.keys():
             print("** class doesn't exist **")
-        elif len(commands) < 2:
+        elif len(line.split()) < 2:
             print("** instance id missing **")
         else:
-            objects = storage.all()
+            new_instance = "{}.{}".format(line.split()[0], line.split()[1])
+            objs = models.storage.all()
 
-            key = "{}.{}".format(commands[0], commands[1])
-            if key in objects:
-                print(objects[key])
-            else:
+            if new_instance not in objs:
                 print("** no instance found **")
+            else:
+                print(objs[new_instance])
 
-    def do_destroy(self, arg):
-        """
-        Delete an instance based on the class name and id.
-        Usage: destroy <class_name> <id>
-        """
-        commands = shlex.split(arg)
+    def do_destroy(self, line):
+        """Delete command to delete an instance based on class name and id"""
+        splitline = split(line)
 
-        if len(commands) == 0:
+        if not splitline:
             print("** class name missing **")
-        elif commands[0] not in self.valid_classes:
+            return False
+
+        elif splitline[0] not in new_classes:
             print("** class doesn't exist **")
-        elif len(commands) < 2:
+
+        elif len(splitline) < 2:
             print("** instance id missing **")
+
         else:
-            objects = storage.all()
-            key = "{}.{}".format(commands[0], commands[1])
-            if key in objects:
-                del objects[key]
-                storage.save()
-            else:
+            new_instance = splitline[0] + '.' + splitline[1]
+            if new_instance not in models.storage.all():
                 print("** no instance found **")
+            else:
+                del models.storage.all()[new_instance]
+                models.storage.save()
 
-    def do_all(self, arg):
-        """
-        Print the string representation of all instances or a specific class.
-        Usage: <User>.all()
-                <User>.show()
-        """
-        objects = storage.all()
+    def do_all(self, line):
+        """All command to print all instances based or not class name"""
+        str_list = []
 
-        commands = shlex.split(arg)
-
-        if len(commands) == 0:
-            for key, value in objects.items():
-                print(str(value))
-        elif commands[0] not in self.valid_classes:
-            print("** class doesn't exist **")
+        if not line:
+            for new_instance in models.storage.all().values():
+                str_list.append(str(new_instance))
         else:
-            for key, value in objects.items():
-                if key.split('.')[0] == commands[0]:
-                    print(str(value))
+            splitline = split(line)
+            if splitline[0] in new_classes:
+                for key, value in models.storage.all().items():
+                    if value.__class__.__name__ == splitline[0]:
+                        str_list.append(str(value))
+            else:
+                print("** class doesn't exist **")
+                return False
+        print(str_list)
 
-    def do_count(self, arg):
-        """
-        Counts and retrieves the number of instances of a class
-        usage: <class name>.count()
-        """
-        objects = storage.all()
+    def do_update(self, line):
+        """Update command to update an instance base on class name and id"""
+        splitline = split(line)
 
-        commands = shlex.split(arg)
+        if not splitline:
+            print("** class name missing **")
 
-        if arg:
-            cls_nm = commands[0]
+        elif splitline[0] not in new_classes:
+            print("** class doesn't exist **")
 
+        elif len(splitline) < 2:
+            print("** instance id missing **")
+
+        elif len(splitline) < 3:
+            print("** attribute name missing **")
+
+        elif len(splitline) < 4:
+            print("** value missing **")
+
+        else:
+            new_instance = splitline[0] + '.' + splitline[1]
+            if new_instance not in models.storage.all():
+                print("** no instance found **")
+            else:
+                setattr(models.storage.all()[new_instance],
+                        splitline[2], splitline[3])
+                models.storage.save()
+
+    def default(self, line):
+        """Parse and interpretates a line if not found on regular commands"""
         count = 0
-
-        if commands:
-            if cls_nm in self.valid_classes:
-                for obj in objects.values():
-                    if obj.__class__.__name__ == cls_nm:
+        splitline = line.split('.', 1)
+        if len(splitline) >= 2:
+            line = splitline[1].split('(')
+            """ Execute <class name>.all()"""
+            if line[0] == 'all':
+                self.do_all(splitline[0])
+                """Execute <class name>.count() """
+            elif line[0] == 'count':
+                for key in models.storage.all():
+                    if splitline[0] == key.split(".")[0]:
                         count += 1
                 print(count)
-            else:
-                print("** invalid class name **")
-        else:
-            print("** class name missing **")
-
-    def do_update(self, arg):
-        """
-        Update an instance by adding or updating an attribute.
-        Usage: update <class_name> <id> <attribute_name> "<attribute_value>"
-        """
-        commands = shlex.split(arg)
-
-        if len(commands) == 0:
-            print("** class name missing **")
-        elif commands[0] not in self.valid_classes:
-            print("** class doesn't exist **")
-        elif len(commands) < 2:
-            print("** instance id missing **")
-        else:
-            objects = storage.all()
-
-            key = "{}.{}".format(commands[0], commands[1])
-            if key not in objects:
-                print("** no instance found **")
-            elif len(commands) < 3:
-                print("** attribute name missing **")
-            elif len(commands) < 4:
-                print("** value missing **")
-            else:
-                obj = objects[key]
-                curly_braces = re.search(r"\{(.*?)\}", arg)
-
-                if curly_braces:
-                    try:
-                        str_data = curly_braces.group(1)
-
-                        arg_dict = ast.literal_eval("{" + str_data + "}")
-
-                        attribute_names = list(arg_dict.keys())
-                        attribute_values = list(arg_dict.values())
-                        try:
-                            attr_name1 = attribute_names[0]
-                            attr_value1 = attribute_values[0]
-                            setattr(obj, attr_name1, attr_value1)
-                        except Exception:
-                            pass
-                        try:
-                            attr_name2 = attribute_names[1]
-                            attr_value2 = attribute_values[1]
-                            setattr(obj, attr_name2, attr_value2)
-                        except Exception:
-                            pass
-                    except Exception:
-                        pass
+                """Execute <class name>.show(<id>) """
+            elif line[0] == 'show':
+                id = line[1].split(')')
+                str_id = str(splitline[0]) + " " + str(id[0])
+                self.do_show(str_id)
+                """Execute <class name>.destroy(<id>)"""
+            elif line[0] == 'destroy':
+                id = line[1].split(')')
+                str_id = str(splitline[0]) + " " + str(id[0])
+                self.do_destroy(str_id)
+                """Execute <class name>.update(<id>"""
+            elif line[0] == 'update':
+                update = line[1].split(')')
+                split = update[0].split('{')
+                if len(split) == 1:
+                    line = update[0].split(",")
+                    str_id = str(splitline[0]) + " " + str(line[0]) + \
+                        " " + str(line[1]) + " " + str(line[2])
+                    self.do_update(str_id)
                 else:
-
-                    attr_name = commands[2]
-                    attr_value = commands[3]
-
-                    try:
-                        attr_value = eval(attr_value)
-                    except Exception:
-                        pass
-                    setattr(obj, attr_name, attr_value)
-
-                obj.save()
-
-    def default(self, arg):
-        """
-        Default behavior for cmd module when input is invalid
-        """
-        arg_list = arg.split('.')
-
-        cls_nm = arg_list[0]  # incoming class name
-
-        command = arg_list[1].split('(')
-
-        cmd_met = command[0]  # incoming command method
-
-        e_arg = command[1].split(')')[0]  # extra arguments
-
-        method_dict = {
-                'all': self.do_all,
-                'show': self.do_show,
-                'destroy': self.do_destroy,
-                'update': self.do_update,
-                'count': self.do_count
-                }
-
-        if cmd_met in method_dict.keys():
-            if cmd_met != "update":
-                return method_dict[cmd_met]("{} {}".format(cls_nm, e_arg))
-            else:
-                if not cls_nm:
-                    print("** class name missing **")
-                    return
-                try:
-                    obj_id, arg_dict = split_curly_braces(e_arg)
-                except Exception:
-                    pass
-                try:
-                    call = method_dict[cmd_met]
-                    return call("{} {} {}".format(cls_nm, obj_id, arg_dict))
-                except Exception:
-                    pass
-        else:
-            print("*** Unknown syntax: {}".format(arg))
-            return False
+                    id = split[0][:-2]
+                    str_dict = split[1][:-1]
+                    delim = str_dict.split(',')
+                    for row in delim:
+                        key_value = row.split(':')
+                        str_id = str(splitline[0]) + " " + str(id) + \
+                            " " + str(key_value[0]) + " " + str(key_value[1])
+                        self.do_update(str_id)
 
 
 if __name__ == '__main__':
