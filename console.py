@@ -143,6 +143,68 @@ class HBNBCommand(cmd.Cmd):
         setattr(obj, args[2], args[3])
         obj.save()
 
+    def validate_classname(args, check_id=False):
+    """Runs checks on args to validate classname entry.
+    """
+        if len(args) < 1:
+            print("** class name missing **")
+            return False
+        if args[0] not in current_classes.keys():
+            print("** class doesn't exist **")
+            return False
+        if len(args) < 2 and check_id:
+            print("** instance id missing **")
+            return False
+        return True
+
+
+    def validate_attrs(args):
+    """Runs checks on args to validate classname attributes and values.
+    """
+        if len(args) < 3:
+            print("** attribute name missing **")
+            return False
+        if len(args) < 4:
+            print("** value missing **")
+            return False
+        return True
+
+
+    def is_float(x):
+    """Checks if `x` is float.
+    """
+        try:
+            a = float(x)
+        except (TypeError, ValueError):
+            return False
+        else:
+            return True
+
+
+    def is_int(x):
+    """Checks if `x` is int.
+    """
+        try:
+            a = float(x)
+            b = int(a)
+        except (TypeError, ValueError):
+            return False
+        else:
+            return a == b
+
+
+    def parse_str(arg):
+    """Parse `arg` to an `int`, `float` or `string`.
+    """
+    parsed = re.sub("\"", "", arg)
+
+        if is_int(parsed):
+            return int(parsed)
+        elif is_float(parsed):
+            return float(parsed)
+        else:
+            return arg
+
 
 if __name__ == '__main__':
     HBNBCommand().cmdloop()
