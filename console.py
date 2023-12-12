@@ -41,14 +41,14 @@ class HBNBCommand(cmd.Cmd):
         """
         pass
 
-    def do_create(self, inp):
+    def do_create(self, inpt):
         """Creates a new instance of BaseModel, saves it (to the JSON
-        file) and prints the id.
+        file) and prints the id to cmd.
 
         Args:
             class_name (class): name of current class.
         """
-        args = inp.split()
+        args = inpt.split()
         if not self.class_verification(args):
             return
 
@@ -58,11 +58,11 @@ class HBNBCommand(cmd.Cmd):
         inst.save()
         print(inst.id)
 
-    def do_show(self, inp):
+    def do_show(self, inpt):
         """Prints the string representation of an instance based on the
         class name and id.
         """
-        args = inp.split()
+        args = inpt.split()
 
         if not self.class_verification(args):
             return
@@ -110,11 +110,11 @@ class HBNBCommand(cmd.Cmd):
 
         return True
 
-    def do_destroy(self, inp):
+    def do_destroy(self, inpt):
         """Deletes an instance based on the class name and id (save the
         change into the JSON file).
         """
-        args = inp.split()
+        args = inpt.split()
         if not self.class_verification(args):
             return
         if not self.id_verification(args):
@@ -124,11 +124,11 @@ class HBNBCommand(cmd.Cmd):
         models.storage.delete(objects[string_key])
         models.storage.save()
 
-    def do_all(self, inp):
+    def do_all(self, inpt):
         """Prints all string representation of all instances based or not
         on the class name.
         """
-        args = inp.split()
+        args = inpt.split()
         all_objects = models.storage.all()
         list_ = []
         if len(args) == 0:
@@ -146,8 +146,8 @@ class HBNBCommand(cmd.Cmd):
         print(list_)
 
     def do_update(self, line):
-        """ Updates an instance based on the class name and id by adding or
-        updating attribute (save the change into the JSON file).
+        """ Updates an instance based on the class name and id
+        Add or update attribute (save the change into the JSON file).
         """
         act = ""
         for argv in line.split(','):
@@ -176,7 +176,7 @@ class HBNBCommand(cmd.Cmd):
     def precmd(self, arg):
         """Hook before the command is run.
         If the self.block_command returns True, the command is not run.
-        Otherwise, it is run.
+        Otherwise, it runs automatically.
         """
         if '.' in arg and '(' in arg and ')' in arg:
             cls = arg.split('.')
