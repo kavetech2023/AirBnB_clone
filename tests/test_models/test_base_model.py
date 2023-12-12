@@ -23,19 +23,19 @@ class TestBase(unittest.TestCase):
         self.my_model = BaseModel()
         self.my_model.name = "Binita Rai"
 
-    def TearDown(self):
+    def Del_instance(self):
         """
             Removing instance.
         """
         del self.my_model
 
-    def test_id_type(self):
+    def test_type_of_id(self):
         """
             Checks that the type of the id is string.
         """
         self.assertEqual("<class 'str'>", str(type(self.my_model.id)))
 
-    def test_ids_differ(self):
+    def test_ids_different(self):
         """
             Checks that the ids between two instances are different.
         """
