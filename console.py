@@ -3,27 +3,12 @@
 
 It defines one class, `HBNBCommand()`, which sub-classes the `cmd.Cmd` class.
 This module defines abstractions that allows us to manipulate a powerful
-storage system (FileStorage / DB). This abstraction will also allow us to
-change the type of storage easily without updating all of our codebase.
+storage system (FileStorage / DB).
 
-It allows us to interactively and non-interactively:
+It allows us to:
     - create a data model
     - manage (create, update, destroy, etc) objects via a console / interpreter
     - store and persist objects to a file (JSON file)
-
-Typical usage example:
-
-    $ ./console
-    (hbnb)
-
-    (hbnb) help
-    Documented commands (type help <topic>):
-    ========================================
-    EOF  create  help  quit
-
-    (hbnb)
-    (hbnb) quit
-    $
 """
 import re
 import cmd
@@ -50,8 +35,6 @@ class HBNBCommand(cmd.Cmd):
     in the console and calls the appropriate storage engine APIs to manipulate
     application data / models.
 
-    It sub-classes Python's `cmd.Cmd` class which provides a simple framework
-    for writing line-oriented command interpreters.
     """
 
     prompt = "(hbnb) "
@@ -100,7 +83,7 @@ class HBNBCommand(cmd.Cmd):
         return super().do_help(arg)
 
     def do_EOF(self, line):
-        """Inbuilt EOF command to gracefully catch errors.
+        """Inbuilt EOF command to catch errors.
         """
         print("")
         return True
@@ -111,7 +94,7 @@ class HBNBCommand(cmd.Cmd):
         return True
 
     def emptyline(self):
-        """Override default `empty line + return` behaviour.
+        """To Override default `empty line + return` behaviour.
         """
         pass
 
@@ -127,7 +110,7 @@ class HBNBCommand(cmd.Cmd):
         print(new_obj.id)
 
     def do_show(self, arg):
-        """Prints the string representation of an instance.
+        """Print the string representation of an instance.
         """
         args = arg.split()
         if not validate_classname(args, check_id=True):
@@ -159,7 +142,7 @@ class HBNBCommand(cmd.Cmd):
         storage.save()
 
     def do_all(self, arg):
-        """Prints string representation of all instances.
+        """Print string representation of all instances.
         """
         args = arg.split()
         all_objs = storage.all()
